@@ -17,17 +17,17 @@ public class TestController {
         return object.getType() + ": " + object.getValue();
     }
 
+    @PutMapping("/put-test")
+    public String putTest(@RequestBody TestObject object) {
+        System.out.println(object.getType());
+        return "success";
+    }
+
 }
 
 class TestObject {
     private String type;
     private int value;
-
-    public int getValue() {
-        return value;
-    }
-
-    public String getType() {
-        return type;
-    }
+    int getValue() { return value; }
+    String getType() { return type; }
 }
