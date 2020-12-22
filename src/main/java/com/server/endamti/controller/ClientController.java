@@ -1,6 +1,5 @@
 package com.server.endamti.controller;
 
-import com.google.common.collect.Iterables;
 import com.server.endamti.model.Client;
 import com.server.endamti.repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,24 +21,28 @@ public class ClientController {
     }
 
     @PostMapping("/search")
-    private ArrayList<Client> search(@RequestBody Params params) {
+    private ArrayList<Client> search(@RequestBody ClientSearchParams params) {
         ArrayList<Client> clients = new ArrayList<>();
         clientRepo.findAll().forEach(client -> {
             boolean isMatch = true;
 
-            if (params.isHideInactive() != null && params.isHideInactive() && !client.getActive()) {
+            if (params.getHideInactive() != null && params.getHideInactive() && !client.getActive()) {
                 isMatch = false;
             }
 
-            if (params.getCompany() != null && !client.getCompany().toLowerCase().contains(params.getCompany().toLowerCase())) {
+            if (params.getOrganization() != null && (client.getOrganization() == null || !client.getOrganization().toLowerCase().contains(params.getOrganization().toLowerCase()))) {
                 isMatch = false;
             }
 
-            if (params.getFirstname() != null && !client.getFirstname().toLowerCase().contains(params.getFirstname().toLowerCase())) {
+            if (params.getFirstname() != null && (client.getFirstname() == null || !client.getFirstname().toLowerCase().contains(params.getFirstname().toLowerCase()))) {
                 isMatch = false;
             }
 
-            if (params.getLastname() != null && !client.getLastname().toLowerCase().contains(params.getLastname().toLowerCase())) {
+            if (params.getLastname() != null && (client.getLastname() == null || !client.getLastname().toLowerCase().contains(params.getLastname().toLowerCase()))) {
+                isMatch = false;
+            }
+
+            if (params.getStatus() != null && !client.getStatus().equals(params.getStatus())) {
                 isMatch = false;
             }
 
@@ -50,15 +53,36 @@ public class ClientController {
         return clients;
     }
 
+    @PutMapping("/update")
+    private Client update(@RequestBody Client client) {
+        return clientRepo.save(client);
+    }
+
+    @DeleteMapping("/delete")
+    private void delete(@RequestParam Integer id) {
+        clientRepo.deleteById(id);
+    }
+
+    @PutMapping("/activate")
+    private boolean activate(@RequestParam int id) {
+        if (clientRepo.existsById(id)) {
+            Client client = clientRepo.findById(id).get();
+            client.setActive(!client.getActive());
+            clientRepo.save(client);
+            return true;
+        }
+        return false;
+    }
 }
 
-class Params {
+class ClientSearchParams {
     private Boolean hideInactive;
     private String firstname;
     private String lastname;
-    private String company;
+    private String organization;
+    private String status;
 
-    public Boolean isHideInactive() {
+    public Boolean getHideInactive() {
         return hideInactive;
     }
 
@@ -82,11 +106,19 @@ class Params {
         this.lastname = lastname;
     }
 
-    public String getCompany() {
-        return company;
+    public String getOrganization() {
+        return organization;
     }
 
-    public void setCompany(String company) {
-        this.company = company;
+    public void setOrganization(String organization) {
+        this.organization = organization;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
