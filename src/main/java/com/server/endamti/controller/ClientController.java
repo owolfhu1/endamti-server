@@ -73,6 +73,39 @@ public class ClientController {
         }
         return false;
     }
+
+    @GetMapping("/emails")
+    private ArrayList<Client> emails() {
+        ArrayList<Client> clients = new ArrayList<>();
+        clientRepo.findAll().forEach(client -> {
+            if (client.getEmail() != null) {
+                clients.add(client);
+            }
+        });
+        return clients;
+    }
+
+    @GetMapping("/sms")
+    private ArrayList<Client> sms() {
+        ArrayList<Client> clients = new ArrayList<>();
+        clientRepo.findAll().forEach(client -> {
+            if (
+                (client.getPhone() != null || client.getOtherPhone() != null)
+                && client.getCanSms()
+            ) {
+                clients.add(client);
+            }
+        });
+        return clients;
+    }
+
+    @GetMapping("/get")
+    private Client get(@RequestParam int id) {
+        if (clientRepo.existsById(id)) {
+            return clientRepo.findById(id).get();
+        }
+        return null;
+    }
 }
 
 class ClientSearchParams {
@@ -81,6 +114,24 @@ class ClientSearchParams {
     private String lastname;
     private String organization;
     private String status;
+    private String from;
+    private String to;
+
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
+    }
 
     public Boolean getHideInactive() {
         return hideInactive;
