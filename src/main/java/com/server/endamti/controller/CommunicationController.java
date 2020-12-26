@@ -1,18 +1,42 @@
 package com.server.endamti.controller;
 
+import com.sendgrid.*;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.*;
+
 import com.server.endamti.model.Communication;
 import com.server.endamti.model.Template;
 import com.server.endamti.repository.CommunicationRepository;
 import com.server.endamti.repository.TemplateRepository;
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/communication")
 public class CommunicationController {
+
+    @Value("${spring.sendgrid.api-key}")
+    private String sendGridApiKey;
+
+    @Value("${spring.sendgrid.sender-email}")
+    private String emailHost;
+
+    @Value("${spring.twilio.sid}")
+    private String twilioSID;
+
+    @Value("${spring.twilio.token}")
+    private String twilioToken;
+
+    @Value("${spring.twilio.number}")
+    private String twilioNumber;
 
     @Autowired
     private CommunicationRepository comRepo;
@@ -21,24 +45,49 @@ public class CommunicationController {
     private TemplateRepository tempRepo;
 
     @PostMapping("/email")
-    private boolean sendEmail(@RequestBody EmailDTO email) {
-        // todo send email here
+    private String sendEmail(@RequestBody EmailDTO email) throws IOException {
+        Email from = new Email(emailHost);
+        Email to = new Email(email.getTo());
+        Content content = new Content("text/html", email.getBody());
+        Mail mail = new Mail(from, email.getSubject(), to, content);
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+        request.setBody(mail.build());
+        Response response = sg.api(request);
 
-        Communication com = new Communication();
-        com.setType("EMAIL");
-        com.setBody(email.getBody());
-        com.setClientId(email.getClientId());
-        com.setDate(email.getDate());
-        com.setUsername(email.getUsername());
-        com.setSubject(email.getSubject());
-        com.setDestination(email.getTo());
-        comRepo.save(com);
-        return true;
+        boolean success = (response.getStatusCode() + "").charAt(0) == '2';
+
+        if (success) {
+            Communication com = new Communication();
+            com.setType("EMAIL");
+            com.setBody(email.getBody());
+            com.setClientId(email.getClientId());
+            com.setDate(email.getDate());
+            com.setUsername(email.getUsername());
+            com.setSubject(email.getSubject());
+            com.setDestination(email.getTo());
+            comRepo.save(com);
+            return "Email sent.";
+        }
+        return "Something went wrong, message not sent.";
     }
 
     @PostMapping("/sms")
-    private boolean sendSMS(@RequestBody SMSDTO sms) {
-        // todo send SMS here
+    private String sendSMS(@RequestBody SMSDTO sms) {
+        String number = sms.getTo().replaceAll("[^\\d]", "");
+
+        if(number.length() != 10) {
+            return "Invalid phone Number, message not sent.";
+        }
+
+        Twilio.init(twilioSID, twilioToken);
+        Message.creator(
+                new PhoneNumber("+1" + number),
+                new PhoneNumber(twilioNumber),
+                sms.getBody()
+        ).create();
 
         Communication com = new Communication();
         com.setType("SMS");
@@ -48,7 +97,7 @@ public class CommunicationController {
         com.setUsername(sms.getUsername());
         com.setDestination(sms.getTo());
         comRepo.save(com);
-        return true;
+        return "Message sent.";
     }
 
 

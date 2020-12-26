@@ -1,22 +1,58 @@
+-- run when setting up database for the first time
+
 CREATE TABLE users (
-    id int NOT NULL AUTO_INCREMENT,
-    username varchar(20) NOT NULL,
-    password varchar(50) NOT NULL,
-    email varchar(50) NOT NULL,
-    PRIMARY KEY (id)
+   id int NOT NULL AUTO_INCREMENT,
+   username varchar(20) NOT NULL ,
+   password varchar(50) NOT NULL ,
+   email varchar(50) NOT NULL,
+   PRIMARY KEY (id)
 );
 
 CREATE TABLE clients (
    id int NOT NULL AUTO_INCREMENT,
-   firstname varchar(20) NOT NULL,
-   lastname varchar(20) NOT NULL,
-   email varchar(50) NOT NULL,
-   phone varchar(50) NOT NULL,
+   email varchar(50),
+   prefix varchar(20),
+   firstname varchar(20),
+   lastname varchar(20),
+   phone varchar(50),
+   other_phone varchar(50),
+   street varchar(50),
+   city varchar(50),
+   state varchar(50),
+   zip varchar(20),
+   opt_in boolean,
+   status varchar(20),
+   entry_date varchar(50),
+   gender varchar(20),
+   visits int,
+   last_visit varchar(50),
+   notification_by varchar(20),
+   internal_id varchar(20),
+   balance int,
+   title varchar(20),
+   organization varchar(50),
    can_sms boolean,
    is_active boolean,
-   company varchar(50) NOT NULL,
-   address varchar(50) NOT NULL,
-   description varchar(255) NOT NULL,
    PRIMARY KEY (id)
 );
 
+CREATE TABLE communications (
+   id int NOT NULL AUTO_INCREMENT,
+   client_id int,
+   username varchar(20),
+   type_string varchar(10),
+   destination varchar(50),
+   subject varchar(50),
+   body varchar(16000),
+   date varchar(50),
+   PRIMARY KEY (id)
+);
+
+CREATE TABLE templates (
+   id int NOT NULL AUTO_INCREMENT,
+   type_string varchar(10),
+   title varchar(50),
+   subject varchar(50),
+   body varchar(16000),
+   PRIMARY KEY (id)
+);
